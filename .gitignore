@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+dist/
+build/
+.pytest_cache/
+.dev-deps/
+
+# Machine-specific deployment proposals and native smoke logs
+*.local.json
+*.local.toml
+docs/INSTALL-PREVIEW.*.json
+docs/CODEX-*.stdout.jsonl
+docs/CODEX-*.stderr.txt
+INSTALL-APPROVED-PREVIEW.cmd
+
+# Local approvals, runtime state and credentials
+.agent-army/
+.research-agent/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+docs/STEP-7-PRECHECK.json
+docs/STEP-7-EXECUTION.json
+docs/STEP-7-PREVIEW.vi.md

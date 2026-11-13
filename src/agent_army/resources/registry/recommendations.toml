@@ -1,0 +1,91 @@
+schema_version = 1
+
+[recommendations]
+orchestrator = [
+  { source = "https://github.com/obra/superpowers", name = "brainstorming", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "writing-plans", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "dispatching-parallel-agents", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "verification-before-completion", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "research-pipeline", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "vibe-research-workflow", reason = "Optional support for research coordinator; select only when task-relevant and available." },
+]
+research = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "literature-review", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "deep-research", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "research-lit", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "semantic-scholar", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "openalex", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "citation-management", reason = "Optional support for literature and evidence specialist; select only when task-relevant and available." },
+]
+methodology = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "hypothesis-generation", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "experimental-design", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "novelty-check", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "experiment-plan", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "ablation-planner", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "idea-evaluator", reason = "Optional support for study and experiment designer; select only when task-relevant and available." },
+]
+data-steward = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "exploratory-data-analysis", reason = "Optional support for research data steward; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "polars", reason = "Optional support for research data steward; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "dask", reason = "Optional support for research data steward; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "datalad", reason = "Optional support for research data steward; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "scikit-learn", reason = "Optional support for research data steward; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "verification-before-completion", reason = "Optional support for research data steward; select only when task-relevant and available." },
+]
+coding = [
+  { source = "https://github.com/obra/superpowers", name = "test-driven-development", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "systematic-debugging", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "requesting-code-review", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "research-implement-feature", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "pytorch-lightning", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "scikit-learn", reason = "Optional support for research software engineer; select only when task-relevant and available." },
+]
+experiment = [
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "run-experiment", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "experiment-queue", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "monitor-experiment", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "training-check", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "system-profile", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "experiment-audit", reason = "Optional support for experiment operator; select only when task-relevant and available." },
+]
+statistical-analyst = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "statistical-analysis", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "statsmodels", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "pymc", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "shap", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "analyze-results", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "result-to-claim", reason = "Optional support for statistical analysis specialist; select only when task-relevant and available." },
+]
+visualization = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "scientific-visualization", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "matplotlib", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "seaborn", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "paper-figure", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "figure-spec", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "figure-designer", reason = "Optional support for scientific visualization specialist; select only when task-relevant and available." },
+]
+writing = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "scientific-writing", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "paper-writing", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "rebuttal", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "paper-writer", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "paper-polish", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+  { source = "https://github.com/blader/humanizer", name = "humanizer", reason = "Optional support for scientific writing specialist; select only when task-relevant and available." },
+]
+reviewer = [
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "peer-review", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "research-review", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "experiment-audit", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "paper-claim-audit", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "citation-audit", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+  { source = "https://github.com/HKUSTDial/Supervisor-Skills", name = "pre-submission-reviewer", reason = "Optional support for independent scientific reviewer; select only when task-relevant and available." },
+]
+knowledge-curator = [
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "research-wiki", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "wiki-enrich", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "citation-management", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+  { source = "https://github.com/k-dense-ai/scientific-agent-skills", name = "markitdown", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+  { source = "https://github.com/wanshuiyin/auto-claude-code-research-in-sleep", name = "citation-audit", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+  { source = "https://github.com/obra/superpowers", name = "verification-before-completion", reason = "Optional support for knowledge and memory curator; select only when task-relevant and available." },
+]

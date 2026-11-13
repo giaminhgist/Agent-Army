@@ -1,0 +1,19 @@
+{
+  "tests_run": 99,
+  "passed": 98,
+  "skipped": [
+    "OS does not permit creating symlinks"
+  ],
+  "generated": 22,
+  "wheel": "agent_army-0.4.0-py3-none-any.whl",
+  "packaged_smoke": {
+    "module": "<CHECKOUT>/Agent-Army\\build\\wheel-smoke-v040\\agent_army\\__init__.py",
+    "version": "0.4.0",
+    "packaged_job_cli": "pass",
+    "unapproved_run": "blocked"
+  },
+  "mode": "supervised_only",
+  "trusted_native_approval": "not_available",
+  "native_host_validation": "not_tested",
+  "real_data_modified": false
+}

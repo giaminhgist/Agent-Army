@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-army"
+version = "0.5.0"
+description = "Portable research agent definitions for Claude Code and Codex"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+skills = ["PyYAML>=6.0,<7"]
+
+[project.scripts]
+army = "agent_army.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+agent_army = ["resources/registry/*.toml", "resources/prompts/*.md"]
