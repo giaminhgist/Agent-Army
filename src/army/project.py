@@ -39,6 +39,8 @@ def load_project(root: Path) -> dict:
 def init_project(root: Path, raw_dirs: list[str], sensitive_dirs: list[str]) -> Path:
     root = Path(root)
     st = paths.state_dir(root)
+    if st.resolve() == paths.army_home().resolve():
+        raise ValueError(f"{st} is the Agent-Army global store; run `army init` inside a project directory instead.")
     for d in ("knowledge", "memory", "runs"):
         (st / d).mkdir(parents=True, exist_ok=True)
     marker = st / paths.PROJECT_MARKER

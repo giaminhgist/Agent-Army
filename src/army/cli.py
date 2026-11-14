@@ -83,11 +83,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     ap = build_parser()
     args = ap.parse_args(argv)
+    import sqlite3
+
     try:
         return HANDLERS[args.cmd](args)
     except CliError as e:
         print(str(e), file=sys.stderr)
         return e.code
+    except sqlite3.OperationalError as e:
+        print(f"Knowledge index is busy ({e}); try again in a moment.", file=sys.stderr)
+        return 1
 
 
 # ---- handlers -------------------------------------------------------------------------------------------------
@@ -175,7 +180,10 @@ def cmd_init(args) -> int:
     from army import project
 
     root = Path.cwd()
-    st = project.init_project(root, args.raw, args.sensitive)
+    try:
+        st = project.init_project(root, args.raw, args.sensitive)
+    except ValueError as e:
+        raise CliError(str(e))
     cfg = project.load_project(root)
     print(f"Agent-Army project ready: {st}")
     print(f"  raw (read-only): {', '.join(cfg['raw_dirs']) or '-'}")

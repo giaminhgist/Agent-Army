@@ -44,6 +44,12 @@ def check(payload: dict, project_root: Path, raw_dirs: list[str]) -> str | None:
     return None
 
 
+SEPARATORS = SEPARATORS | {"(", ")", "{", "}", ";;"}
+KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "for", "in", "!", "case", "esac"}
+WRAPPERS = {"time", "nohup", "nice", "exec", "command", "builtin", "env", "stdbuf", "timeout", "ionice"}
+SUDO_ARG_FLAGS = {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U"}
+
+
 def _check_bash(cmd: str, hit, raws: list[Path], raw_dirs: list[str]) -> str | None:
     try:
         lex = shlex.shlex(cmd, posix=True, punctuation_chars=True)
@@ -56,32 +62,77 @@ def _check_bash(cmd: str, hit, raws: list[Path], raw_dirs: list[str]) -> str | N
                 if raw_s in cmd or str(raw) in cmd:
                     return f"Agent-Army: command may write inside raw data dir {raw}; raw data is read-only."
         return None
+    cwd: list[str] = []  # `cd` targets seen so far, applied in order
     seg: list[str] = []
     for tok in tokens + [";"]:
-        if tok in SEPARATORS:
-            if r := _check_segment(seg, hit):
-                return r
-            seg = []
-        else:
+        if tok not in SEPARATORS:
             seg.append(tok)
+            continue
+        words = _strip_prefix(seg)
+        seg = []
+        if not words:
+            continue
+        if os.path.basename(words[0]) == "cd":
+            cwd.append(words[1] if len(words) > 1 else os.path.expanduser("~"))
+            continue
+
+        def hit_here(p: str) -> str | None:
+            return hit(os.path.join(*cwd, p) if cwd and not os.path.isabs(os.path.expanduser(p)) else p)
+
+        if os.path.basename(words[0]) == "xargs":
+            inner = _strip_prefix([w for w in words[1:] if not w.startswith("-")])
+            if inner and os.path.basename(inner[0]) in WRITE_WORDS | {"sed"}:
+                # the paths come from the rest of the pipeline: check every token of the command
+                if r := next((r for t in tokens if t not in SEPARATORS and (r := hit_here(t))), None):
+                    return r
+            continue
+        if r := _check_segment(words, hit_here):
+            return r
     return None
 
 
-def _check_segment(seg: list[str], hit) -> str | None:
-    if not seg:
-        return None
-    # redirections anywhere in the segment
-    for i, tok in enumerate(seg):
-        if tok in REDIRECTS and i + 1 < len(seg):
-            if r := hit(seg[i + 1]):
+def _strip_prefix(seg: list[str]) -> list[str]:
+    """Drop shell keywords, VAR=value assignments and wrapper commands (sudo, time, nohup, env ...)."""
+    w = list(seg)
+    while w:
+        head = w[0]
+        if head in KEYWORDS or ("=" in head and not head.startswith(("-", "/", ".")) and head.split("=")[0].isidentifier()):
+            w = w[1:]
+        elif os.path.basename(head) == "sudo":
+            w = w[1:]
+            while w and w[0].startswith("-"):
+                flag = w.pop(0)
+                if flag in SUDO_ARG_FLAGS and w:
+                    w.pop(0)
+        elif os.path.basename(head) in WRAPPERS:
+            w = w[1:]
+            while w and w[0].startswith("-"):
+                w.pop(0)
+            if os.path.basename(head) == "timeout" and w:
+                w.pop(0)  # the duration
+        else:
+            break
+    return w
+
+
+def _check_segment(words: list[str], hit) -> str | None:
+    for i, tok in enumerate(words):
+        if tok in REDIRECTS and i + 1 < len(words):
+            if r := hit(words[i + 1]):
                 return r
-    words = [t for t in seg if t not in REDIRECTS]
-    while words and ("=" in words[0] and not words[0].startswith("-")) or (words and words[0] in ("sudo", "env", "command")):
-        words = words[1:]
+    words = [t for t in words if t not in REDIRECTS]
     if not words:
         return None
     prog = os.path.basename(words[0])
     args = [a for a in words[1:] if not a.startswith("-")]
+    for i, a in enumerate(words[1:], 1):  # cp/mv/install -t DIR, --target-directory=DIR
+        if prog in LAST_ARG | {"mv"}:
+            if a == "-t" and i + 1 < len(words):
+                if r := hit(words[i + 1]):
+                    return r
+            elif a.startswith("--target-directory="):
+                if r := hit(a.split("=", 1)[1]):
+                    return r
     if prog in ANY_ARG:
         return next((r for a in args if (r := hit(a))), None)
     if prog in LAST_ARG and args:
@@ -90,6 +141,14 @@ def _check_segment(seg: list[str], hit) -> str | None:
         return next((r for a in args if (r := hit(a))), None)
     if prog == "dd":
         return next((r for a in args if a.startswith("of=") and (r := hit(a[3:]))), None)
+    if prog == "find" and ("-delete" in words or any(w in ("-exec", "-execdir") for w in words)):
+        starts = []
+        for a in words[1:]:
+            if a.startswith("-") or a in ("(", "!"):
+                break
+            starts.append(a)
+        if "-delete" in words or any(os.path.basename(w) in ANY_ARG for w in words):
+            return next((r for a in starts if (r := hit(a))), None)
     return None
 
 
