@@ -210,13 +210,9 @@ Sau đó chạy `army build` và khởi động lại Claude Code hoặc Codex.
 
 ## Phát triển
 
-```bash
-python3 -m unittest discover -s tests -t .
-```
-
 Cấu trúc thư mục:
 
 - `army.toml`: nguồn duy nhất định nghĩa agent.
 - `prompts/`: prompt của từng agent và luật chung.
 - `src/army/`: CLI, kho kiến thức, hook, bộ render và bộ cài.
-- `docs/`: thiết kế và kế hoạch.
+- `docs/PLAN.md`: thiết kế.
