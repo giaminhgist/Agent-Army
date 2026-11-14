@@ -54,6 +54,10 @@ def build_parser() -> argparse.ArgumentParser:
     ml.add_argument("--kind", choices=["decision", "progress", "lesson", "preference", "paper", "note"])
     mem.add_parser("brief")
 
+    ini = sub.add_parser("init", help="create the project store in the current directory")
+    ini.add_argument("--raw", action="append", default=[], metavar="DIR", help="read-only raw data dir (repeatable)")
+    ini.add_argument("--sensitive", action="append", default=[], metavar="DIR", help="sensitive data dir (repeatable)")
+
     pr = sub.add_parser("promote", help="move project items to the global store")
     pr.add_argument("ids", nargs="*")
     g = pr.add_mutually_exclusive_group()
@@ -154,4 +158,16 @@ def cmd_promote(args) -> int:
     return 0
 
 
-HANDLERS = {"kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
+def cmd_init(args) -> int:
+    from army import project
+
+    root = Path.cwd()
+    st = project.init_project(root, args.raw, args.sensitive)
+    cfg = project.load_project(root)
+    print(f"Agent-Army project ready: {st}")
+    print(f"  raw (read-only): {', '.join(cfg['raw_dirs']) or '-'}")
+    print(f"  sensitive:       {', '.join(cfg['sensitive_dirs']) or '-'}")
+    return 0
+
+
+HANDLERS = {"init": cmd_init, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
