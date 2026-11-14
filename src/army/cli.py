@@ -68,6 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
     hk.add_argument("event")
     hk.add_argument("--platform", choices=["claude", "codex"], required=True)
 
+    sub.add_parser("doctor", help="check the installation and missing recommended skills")
+
     pr = sub.add_parser("promote", help="move project items to the global store")
     pr.add_argument("ids", nargs="*")
     g = pr.add_mutually_exclusive_group()
@@ -210,4 +212,12 @@ def cmd_hook(args) -> int:
     return code
 
 
-HANDLERS = {"hook": cmd_hook, "init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
+def cmd_doctor(args) -> int:
+    from army import doctor
+
+    checks = doctor.run_checks(doctor.installed_platforms())
+    print(doctor.report(checks))
+    return 1 if any(c.status == "FAIL" for c in checks) else 0
+
+
+HANDLERS = {"doctor": cmd_doctor, "hook": cmd_hook, "init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
