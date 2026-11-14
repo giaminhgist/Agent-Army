@@ -64,6 +64,10 @@ def build_parser() -> argparse.ArgumentParser:
     rn.add_argument("command", nargs=argparse.REMAINDER, help="-- CMD ...")
     sub.add_parser("status", help="plan, recent runs, pending promotion")
 
+    hk = sub.add_parser("hook", help="hook entry point (called by Claude Code / Codex)")
+    hk.add_argument("event")
+    hk.add_argument("--platform", choices=["claude", "codex"], required=True)
+
     pr = sub.add_parser("promote", help="move project items to the global store")
     pr.add_argument("ids", nargs="*")
     g = pr.add_mutually_exclusive_group()
@@ -195,4 +199,15 @@ def cmd_status(args) -> int:
     return 0
 
 
-HANDLERS = {"init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
+def cmd_hook(args) -> int:
+    from army import hooks
+
+    code, out, err = hooks.handle(args.event, args.platform, sys.stdin.read())
+    if out:
+        print(out)
+    if err:
+        print(err, file=sys.stderr)
+    return code
+
+
+HANDLERS = {"hook": cmd_hook, "init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
