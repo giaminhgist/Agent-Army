@@ -1,64 +1,222 @@
 # Agent-Army
 
-Research-Agent nâng cấp cho Claude Code và Codex, tại **<CHECKOUT>/Agent-Army**.
+**Đội sub-agent cho nghiên cứu và kỹ thuật, chạy trong chat của Claude Code và Codex CLI. Kiến thức và memory dùng chung giữa hai nền tảng.**
 
-Bản 0.5.0 có core, 11 agent definitions, ba model tiers, skills discovery, shared knowledge/memory, supervised jobs và installer/migration có preview/rollback. Auto vẫn disabled. Kiểm tra Codex thực tế: standalone research role chạy được; native custom-agent selection chưa đạt trên CLI 0.167.0-alpha.4.1. Chưa cài user-level hoặc nghiệm thu Claude.
+Agent-Army là bản viết lại từ [Research-Agent](https://github.com/giaminhgist/Research-Agent), theo hướng **đơn giản hơn và ít ràng buộc hơn**:
 
-**Bắt đầu trên máy mới:** [Clone và cài đặt](CAI_DAT.md). **Kết quả kiểm tra:** [Codex smoke tests](docs/CODEX-CHECK.vi.md).
+- **9 sub-agent chuyên môn.** Mỗi agent có tier model mặc định: light, medium hoặc heavy.
+- **Không cài sẵn skill nào.** Bạn tự cài skill mình muốn. Mỗi agent có 10 skill *đề xuất*: agent dùng skill đề xuất khi đã cài, và vẫn được dùng mọi skill khác có trên máy.
+- **Một kho kiến thức và memory dùng chung** cho Claude và Codex, chia hai tầng global và project. Bạn tự chọn mục nào từ project được đưa lên global.
+- **Một bộ harness gọn:** tóm tắt memory đầu phiên, guard chặn ghi vào raw data, log mỗi lần chạy, cổng kiểm chứng `accept / repair / reject`.
+- Chỉ dùng Python chuẩn (≥ 3.11): không cần pip, không cần venv. Hỗ trợ Linux và macOS.
 
-- [Proposal](PROPOSAL.vi.md)
-- [Thiết kế](docs/DESIGN.vi.md) và [hợp đồng dữ liệu](docs/CONTRACTS.vi.md)
-- [Báo cáo bước 2](docs/STEP-2-REPORT.vi.md)
-- [Skills: cách dùng và giới hạn](docs/SKILLS.vi.md)
-- [Báo cáo bước 3](docs/STEP-3-REPORT.vi.md)
-- [Shared knowledge/memory: cách dùng](docs/KNOWLEDGE.vi.md)
-- [Báo cáo bước 4](docs/STEP-4-REPORT.vi.md)
-- [Kế hoạch](docs/IMPLEMENTATION.vi.md)
+---
 
-Năm repo chỉ là gợi ý. Tất cả agent có thể dùng skills phù hợp từ nguồn khác đã cài/cho phép; thiếu skills gợi ý không chặn công việc khi tools/năng lực hiện có đủ.
+## Đội hình
 
-## Chạy từ source
+| Agent | Tier | Vai trò |
+|---|---|---|
+| **commander** | heavy | Hiểu mục tiêu, lập kế hoạch, giao việc, chạy cổng kiểm chứng và các vòng lặp, ghi memory, hỏi bạn mục nào đưa lên global |
+| **scout** | light | Tìm và tổng hợp tài liệu, so sánh SOTA, tìm research gap, dataset, kiểm tra trích dẫn |
+| **strategist** | medium | Ý tưởng, giả thuyết có thể bác bỏ, novelty, thiết kế thí nghiệm, kế hoạch thống kê, ablation |
+| **engineer** | light | Code Python/PyTorch, pipeline, TDD, debug, refactor |
+| **experimenter** | light | Chạy thí nghiệm có log, kiểm tra dữ liệu, EDA, thống kê, vẽ hình |
+| **writer** | medium | Bản thảo, proposal, rebuttal, tài liệu kỹ thuật, LaTeX |
+| **editor** | light | Biên tập văn phong, bỏ dấu vết văn AI, thống nhất thuật ngữ |
+| **reviewer** | medium | Phản biện độc lập trong context mới, so sánh nhiều phương án |
+| **auditor** | medium | Cổng kiểm chứng: tự kiểm tra lại thống kê, toán, leakage, reproducibility và trích dẫn, rồi kết luận `accept / repair / reject` |
 
-Python >=3.11. Core không có dependencies ngoài; discovery cần optional extra PyYAML. Dev environment tại đây dùng .dev-deps, không cài global.
+**Tier → model:**
 
-~~~powershell
-$env:PYTHONPATH = (Join-Path (Get-Location) 'src') + [IO.Path]::PathSeparator + (Join-Path (Get-Location) '.dev-deps')
-python -m agent_army --isolated agents validate --json
-python -m agent_army --isolated models resolve --agent research --host codex
-python -m agent_army --isolated route "tổng quan tài liệu"
-python -m agent_army --isolated agents build --host both --output build
-python -m agent_army skills list --host codex
-python -m agent_army --isolated skills resolve --host codex --root C:\my-skills --agent research --task "literature review"
-python -m agent_army skills doctor --host claude
-python -m unittest discover -s tests -v
-~~~
+| Tier | Claude Code | Codex |
+|---|---|---|
+| light | sonnet | model mặc định, effort `medium` |
+| medium | opus | model mặc định, effort `high` |
+| heavy | fable | model mặc định, effort `xhigh` |
 
-Thay python bằng executable thật nếu PATH chỉ có Windows Store alias. Army console entrypoint đã khai báo nhưng chưa cài global. --json có thể đứng cuối; global options khác đặt trước subcommand. --isolated bỏ default config/skill roots; --root và --config explicit vẫn được dùng.
+Trên Claude, commander được nâng tier cho một agent khi task cần. Trên Codex, mỗi agent cố định ở tier mặc định.
 
-## Nguồn chuẩn
+### Skill đề xuất (10 skill mỗi agent)
 
-src/agent_army/resources/registry/: agents.toml, models.toml, recommendations.toml.
-src/agent_army/resources/prompts/: protocol chung và 11 prompts chuyên môn.
+Skill lấy từ 4 repo: [superpowers](https://github.com/obra/superpowers) (SP), [ARIS](https://github.com/wanshuiyin/auto-claude-code-research-in-sleep) (ARIS), [K-Dense scientific-agent-skills](https://github.com/k-dense-ai/scientific-agent-skills) (KD) và [humanizer](https://github.com/blader/humanizer) (HZ). Agent-Army **không cài** các repo này; bạn cài repo nào thì agent dùng skill của repo đó.
 
-Có thể thêm role không sửa Python. Recommendations có thể rỗng; generated files không có mandatory skill preload. Config: bundled → global → project → explicit overrides. Model resolve không gọi inference hoặc silent fallback.
-
-Build tạo 22 native Claude Markdown/Codex TOML, kèm manifest/hash. Chỉ ghi staging; từ chối native/state directories và file sửa tay. Dùng output riêng khi đổi tier. Build không concurrent-safe/transaction toàn thư mục, không tự xóa stale files.
-
-## Trạng thái
-
-| Chức năng | Trạng thái |
+| Agent | Skill đề xuất |
 |---|---|
-| Agent definitions, model tiers, routing | Có |
-| Native renderers | Có; chưa host nghiệm thu |
-| Skills discovery/resolver | Có; read-only metadata/planning |
-| Shared global/project memory/knowledge | Có store/retrieval và promotion qua console supervised |
-| Approvals, jobs, budgets | Có supervised runner + console consent; xem docs/JOBS.vi.md |
-| Auto mode | Disabled: thiếu trusted host adapter và worker isolation |
-| Installer/migration | Có preview/apply/rollback; đã test fake homes, chưa cài thật |
-| Native host integration tests | Bước 7 |
+| commander | brainstorming, writing-plans, executing-plans, dispatching-parallel-agents, subagent-driven-development, verification-before-completion (SP) · research-pipeline, idea-discovery, research-refine-pipeline (ARIS) · get-available-resources (KD) |
+| scout | research-lit, arxiv, semantic-scholar, openalex, alphaxiv, research-wiki (ARIS) · literature-review, citation-management, research-lookup, paper-lookup (KD) |
+| strategist | idea-creator, novelty-check, research-refine, experiment-plan, ablation-planner (ARIS) · hypothesis-generation, experimental-design, scientific-brainstorming, statistical-power (KD) · brainstorming (SP) |
+| engineer | test-driven-development, systematic-debugging, requesting-code-review, receiving-code-review, using-git-worktrees, verification-before-completion (SP) · research-implement-feature, experiment-bridge, web-debug-search (ARIS) · optimize-for-gpu (KD) |
+| experimenter | run-experiment, experiment-queue, monitor-experiment, training-check, analyze-results, result-to-claim (ARIS) · exploratory-data-analysis, statistical-analysis, scientific-visualization, matplotlib (KD) |
+| writer | paper-writing, paper-plan, paper-figure, paper-compile, rebuttal, grant-proposal (ARIS) · scientific-writing, venue-templates, citation-management, scientific-schematics (KD) |
+| editor | humanizer (HZ) · paper-claim-audit, citation-audit, citation-crosscheck, auto-paper-improvement-loop, writing-systems-papers (ARIS) · scientific-writing, venue-templates, scientific-critical-thinking (KD) · verification-before-completion (SP) |
+| reviewer | research-review, kill-argument, auto-review-loop, novelty-check, experiment-audit, proof-checker (ARIS) · peer-review, scientific-critical-thinking, scholar-evaluation (KD) · receiving-code-review (SP) |
+| auditor | experiment-audit, result-to-claim, citation-audit, citation-crosscheck, paper-claim-audit, integrity-forensics, proof-checker (ARIS) · statistical-analysis, uncertainty-and-units (KD) · verification-before-completion (SP) |
 
-Policies trong prompts là chỉ dẫn, chưa enforcement runtime. Resolution không phải authorization hay xác nhận skill chạy được. Research-Agent cũ giữ nguyên.
+---
 
-## Cài đặt và chuyển dữ liệu
+## Cài đặt
 
-Xem [INSTALL.vi.md](docs/INSTALL.vi.md): cài native definitions cho một hoặc cả hai host, runtime chung, ownership/backup/rollback và migration import-copy. Không cài repo skills, không sửa host configs/PATH, không khởi tạo hoặc xóa KB/memory ngầm. CLI `install plan` và `migration plan` chỉ tạo proposal; apply yêu cầu duyệt riêng.
+### Yêu cầu
+
+- Python ≥ 3.11 (`python3 --version`).
+- git.
+- Claude Code và/hoặc Codex CLI. Codex cần bản có hook, ví dụ 0.169 trở lên.
+- Linux hoặc macOS.
+
+### Các bước
+
+```bash
+git clone https://github.com/giaminhgist/Agent-Army.git ~/Agent-Army
+cd ~/Agent-Army
+
+python3 install.py --dry-run   # xem trước những gì sẽ thay đổi, không ghi gì
+python3 install.py             # tự nhận claude và/hoặc codex có trên máy
+# hoặc chỉ định:  python3 install.py --claude   |   python3 install.py --codex
+
+army doctor                    # kiểm tra cài đặt và liệt kê skill đề xuất còn thiếu
+```
+
+Sau khi cài:
+
+1. **Khởi động lại** Claude Code và Codex để chúng nạp agent và hook mới.
+2. **Codex:** chạy `/hooks` một lần trong Codex để cho phép (trust) các hook của Agent-Army. Codex bắt buộc bước này.
+3. Nếu shell báo không tìm thấy lệnh `army`, thêm `~/.local/bin` vào `PATH`.
+4. (Tùy chọn) Cài các repo skill bạn muốn, theo README của từng repo. Chạy lại `army doctor` để xem còn thiếu skill nào.
+
+### Bộ cài ghi vào đâu
+
+Mọi file được ghi lại trong `~/.agent-army/install-manifest.json`.
+
+| Gì | Ở đâu |
+|---|---|
+| App, launcher, kho global, cấu hình | `~/.agent-army/` (`app/`, `bin/army`, `knowledge/`, `memory/`, `army.toml`) |
+| Lệnh `army` | `~/.local/bin/army` (symlink) |
+| Claude Code | `~/.claude/agents/army-*.md`, `~/.claude/skills/army/`; hook trong `~/.claude/settings.json` (có backup `.army-bak`); một khối hướng dẫn trong `~/.claude/CLAUDE.md` |
+| Codex | `~/.codex/agents/army_*.toml`, `~/.agents/skills/army/`; hook trong `~/.codex/hooks.json`; một khối hướng dẫn trong `~/.codex/AGENTS.md` |
+
+Bộ cài chỉ thêm và gỡ phần của Agent-Army. Các cài đặt, hook và nội dung khác của bạn được giữ nguyên.
+
+### Cập nhật
+
+```bash
+cd ~/Agent-Army && git pull && python3 install.py
+```
+
+File `~/.agent-army/army.toml` bạn đã sửa sẽ không bị ghi đè.
+
+### Gỡ cài đặt
+
+```bash
+python3 install.py --uninstall           # giữ lại kiến thức và memory global
+python3 install.py --uninstall --purge   # xóa hết, kể cả ~/.agent-army
+```
+
+---
+
+## Cách dùng
+
+### Bắt đầu một project
+
+```bash
+cd ~/my-project
+army init --raw data/raw --sensitive data/phi   # raw: chỉ đọc; sensitive: không gửi ra ngoài
+```
+
+Lệnh này tạo `.agent-army/` gồm `project.toml`, `plan.md`, `knowledge/`, `memory/` và `runs/`.
+
+### Trong chat
+
+| | Claude Code | Codex |
+|---|---|---|
+| Giao mục tiêu cho commander | `/army <mục tiêu> [--loop research\|coding\|full]` | `$army <mục tiêu>` |
+| Gọi trực tiếp một agent | "dùng army-scout để …" | "have army_scout …" |
+
+Ví dụ:
+
+- `/army khảo sát biomarker eye-tracking cho phát hiện sớm Alzheimer 2019–2026, bảng so sánh và research gap --loop research`
+- `/army CPU pilot: logistic regression vs GRU trên gaze features, subject-level 5-fold CV --loop coding`
+- `$army viết Methods và Results cho MICCAI từ các run đã qua auditor`
+
+**Vòng lặp:**
+
+| Loop | Thứ tự |
+|---|---|
+| research | scout → strategist → reviewer |
+| coding | engineer → experimenter → auditor |
+| full | research rồi coding |
+
+Vòng lặp dừng khi reviewer cho PASS hoặc auditor cho accept, và tối đa 3 vòng.
+
+### Kiến thức và memory (Claude và Codex dùng chung)
+
+```
+~/.agent-army/{knowledge,memory}/            GLOBAL
+<project>/.agent-army/{knowledge,memory}/    PROJECT
+```
+
+| Lệnh | Tác dụng |
+|---|---|
+| `army kb add --type paper\|note --title "…" [--tags a,b] [--source URL] [--global]` | Thêm paper hoặc note. Nội dung lấy từ stdin hoặc `--body-file`. |
+| `army kb search "câu hỏi" [--scope project\|global\|all]` | Tìm toàn văn (SQLite FTS5). Kết quả project đứng trước global. Gõ tiếng Việt không dấu vẫn tìm được. |
+| `army mem add "…" --kind decision\|progress\|lesson\|preference [--global]` | Ghi memory. |
+| `army mem list` / `army mem brief` | Liệt kê memory / in bản tóm tắt đầu phiên. |
+| `army promote --list` | Xem các mục đang chờ đưa lên global. |
+| `army promote --pick` | Chọn tương tác những mục đưa lên global. |
+| `army promote <id…>` / `army promote --reject <id…>` | Đưa lên global / đánh dấu chỉ dùng trong project. |
+
+Paper, note, lesson và preference mới tạo trong project ở trạng thái *pending*. **Không mục nào tự lên global**: commander sẽ hỏi bạn ở cuối phiên.
+
+### Các lệnh khác
+
+| Lệnh | Tác dụng |
+|---|---|
+| `army run [--seed N] [--out PATH] -- <lệnh>` | Chạy lệnh và ghi log: run_id, git sha, có thay đổi chưa commit không, seed, exit code, file log |
+| `army status` | Xem kế hoạch, các run gần nhất, số mục chờ promote |
+| `army doctor` | Kiểm tra cài đặt và skill đề xuất còn thiếu |
+| `army build` | Tạo lại agent sau khi sửa `~/.agent-army/army.toml` |
+
+---
+
+## Harness
+
+| | Làm gì |
+|---|---|
+| H1 `army init` | Tạo kho project, khai báo thư mục raw (chỉ đọc) và sensitive |
+| H2 Tóm tắt đầu phiên | Hook tự đưa vào phiên: task đang mở, quyết định gần đây, tiến độ, lesson global |
+| H3 Nhắc promote | Hook cuối lượt, chỉ nhắc khi số mục chờ tăng lên |
+| H4 Guard raw data | Chặn ghi, xóa, di chuyển vào thư mục raw, kể cả các lệnh như `cd … && rm`, `sudo rm`, `find -delete` |
+| H5 `army run` | Log mỗi lần chạy thí nghiệm |
+| H6 Kế hoạch và bàn giao | File `.agent-army/plan.md`, và mỗi agent kết thúc bằng một khối Handoff cố định |
+| H7 Cổng kiểm chứng | Auditor kết luận `accept / repair / reject`, tối đa 3 vòng |
+| H8 Kiểm tra chéo model | Tắt mặc định. Bật bằng `cross_model_check = true` để reviewer và auditor hỏi thêm model của nền tảng kia |
+| H9 Snapshot trước khi nén context | Lưu trạng thái trước khi context bị nén, rồi đưa lại vào phiên sau đó |
+| H10 `army status` | Xem trạng thái project |
+| H11 `army doctor` | Kiểm tra sức khỏe cài đặt |
+
+Mọi hook **không bao giờ chặn bạn khi chính nó gặp lỗi**. Lỗi được ghi vào `~/.agent-army/hook-errors.log`.
+
+---
+
+## Tùy chỉnh
+
+Sửa `~/.agent-army/army.toml`:
+
+- Đổi tier của từng agent.
+- Đổi danh sách skill đề xuất.
+- Đặt model cụ thể cho Codex (`[tiers.codex.heavy] model = "…"`).
+- Bật `cross_model_check`.
+
+Sau đó chạy `army build` và khởi động lại Claude Code hoặc Codex.
+
+## Phát triển
+
+```bash
+python3 -m unittest discover -s tests -t .
+```
+
+Cấu trúc thư mục:
+
+- `army.toml`: nguồn duy nhất định nghĩa agent.
+- `prompts/`: prompt của từng agent và luật chung.
+- `src/army/`: CLI, kho kiến thức, hook, bộ render và bộ cài.
+- `docs/`: thiết kế và kế hoạch.
