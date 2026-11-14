@@ -21,7 +21,7 @@ def open_tasks(project: Path) -> list[str]:
     return out
 
 
-def brief(project: Path | None, max_chars: int = 4000) -> str:
+def brief(project: Path | None, max_chars: int = 6000) -> str:
     sections: list[str] = []
     pending_n = 0
     if project is not None:
@@ -40,7 +40,7 @@ def brief(project: Path | None, max_chars: int = 4000) -> str:
         pending_n = sum(1 for i in store.load_items("project", project) if i.meta.get("promote") == "pending")
     glob = [i for i in store.load_items("global") if i.type in ("lesson", "preference")][:10]
     if glob:
-        sections.append("## Global lessons & preferences\n" + "\n".join(f"- [{i.type}] {i.title}" for i in glob))
+        sections.append("## Global lessons & preferences\n" + "\n".join(f"- [{i.type}] {_line(i, pointer=True)}" for i in glob))
     if not sections and not pending_n:
         return ""
     text = "# Agent-Army memory\n\n" + "\n\n".join(sections)
@@ -51,6 +51,20 @@ def brief(project: Path | None, max_chars: int = 4000) -> str:
     return text
 
 
-def _line(item: store.Item) -> str:
+def _line(item: store.Item, limit: int = 300, pointer: bool = False) -> str:
+    """Title plus body summary. Adds id and file path when `pointer` is set or the body was cut,
+    so an agent can open the full item instead of acting on a truncated one."""
     body = " ".join(item.body.split())
-    return item.title if not body or body == item.title else f"{item.title} — {body[:200]}"
+    head = item.title.rstrip("…").rstrip()
+    if not body or body == item.title:
+        text = item.title
+    elif body.startswith(head):  # title is just the start of the body (army mem add)
+        text = body
+    else:
+        text = f"{item.title} — {body}"
+    cut = len(text) > limit
+    if cut:
+        text = text[: limit - 1].rstrip() + "…"
+    if pointer or cut:
+        text += f" (id: {item.id}; full: {item.path})"
+    return text

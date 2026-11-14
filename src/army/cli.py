@@ -125,7 +125,8 @@ def cmd_mem(args) -> int:
 
     if args.mem_cmd == "add":
         project = None if args.glob else _project()
-        title = " ".join(args.text.split())[:80]
+        text = " ".join(args.text.split())
+        title = text if len(text) <= 80 else text[:79].rstrip() + "…"
         item = store.add_item("global" if args.glob else "project", args.kind, title, args.text, project=project)
         print(item.id)
         return 0
