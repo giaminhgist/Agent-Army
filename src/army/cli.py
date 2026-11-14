@@ -68,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     hk.add_argument("event")
     hk.add_argument("--platform", choices=["claude", "codex"], required=True)
 
+    sub.add_parser("build", help="re-render agents from ~/.agent-army/army.toml and redeploy")
     sub.add_parser("doctor", help="check the installation and missing recommended skills")
 
     pr = sub.add_parser("promote", help="move project items to the global store")
@@ -220,4 +221,12 @@ def cmd_doctor(args) -> int:
     return 1 if any(c.status == "FAIL" for c in checks) else 0
 
 
-HANDLERS = {"doctor": cmd_doctor, "hook": cmd_hook, "init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
+def cmd_build(args) -> int:
+    from army import install
+
+    install.redeploy()
+    print("Agents re-rendered and redeployed. Restart Claude Code / Codex to load them.")
+    return 0
+
+
+HANDLERS = {"build": cmd_build, "doctor": cmd_doctor, "hook": cmd_hook, "init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
