@@ -58,6 +58,12 @@ def build_parser() -> argparse.ArgumentParser:
     ini.add_argument("--raw", action="append", default=[], metavar="DIR", help="read-only raw data dir (repeatable)")
     ini.add_argument("--sensitive", action="append", default=[], metavar="DIR", help="sensitive data dir (repeatable)")
 
+    rn = sub.add_parser("run", help="run a command and record it in runs.jsonl")
+    rn.add_argument("--seed", type=int)
+    rn.add_argument("--out", help="main output path of the run")
+    rn.add_argument("command", nargs=argparse.REMAINDER, help="-- CMD ...")
+    sub.add_parser("status", help="plan, recent runs, pending promotion")
+
     pr = sub.add_parser("promote", help="move project items to the global store")
     pr.add_argument("ids", nargs="*")
     g = pr.add_mutually_exclusive_group()
@@ -170,4 +176,23 @@ def cmd_init(args) -> int:
     return 0
 
 
-HANDLERS = {"init": cmd_init, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
+def cmd_run(args) -> int:
+    from army import runlog
+
+    project = _project()
+    cmd = args.command[1:] if args.command[:1] == ["--"] else args.command
+    if not cmd:
+        raise CliError("usage: army run [--seed N] [--out PATH] -- CMD ...")
+    rec = runlog.run(cmd, project, seed=args.seed, out=args.out)
+    print(f"[army] run_id={rec['run_id']} exit={rec['exit_code']} log={rec['log']}", file=sys.stderr)
+    return rec["exit_code"]
+
+
+def cmd_status(args) -> int:
+    from army import status
+
+    print(status.status_text(_project()))
+    return 0
+
+
+HANDLERS = {"init": cmd_init, "run": cmd_run, "status": cmd_status, "kb": cmd_kb, "mem": cmd_mem, "promote": cmd_promote}
