@@ -1,0 +1,81 @@
+# Agent-Army configuration — the single source of truth for agents.
+# Edit this file (installed copy: ~/.agent-army/army.toml), then run `army build`.
+#
+# tier: light | medium | heavy  (mapped per platform below)
+# skills: RECOMMENDED skills only. Agents use them when installed and may use any other installed skill.
+
+[options]
+# H8: reviewer/auditor also ask the other platform's model (codex exec / claude -p) for important verdicts.
+cross_model_check = false
+
+[tiers.claude]
+light = "sonnet"
+medium = "opus"
+heavy = "fable"
+
+# Codex: tier is fixed per agent. Empty model = inherit your Codex default model.
+[tiers.codex.light]
+effort = "medium"
+model = ""
+
+[tiers.codex.medium]
+effort = "high"
+model = ""
+
+[tiers.codex.heavy]
+effort = "xhigh"
+model = ""
+
+[agents.commander]
+tier = "heavy"
+description = "Agent-Army commander: understands the goal, writes the plan, dispatches specialists, runs verification gates and loops, keeps project memory and asks which knowledge goes global."
+tools = ["Agent", "AskUserQuestion", "Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "TodoWrite", "WebSearch", "WebFetch"]
+skills = ["brainstorming", "writing-plans", "executing-plans", "dispatching-parallel-agents", "subagent-driven-development", "verification-before-completion", "research-pipeline", "idea-discovery", "research-refine-pipeline", "get-available-resources"]
+
+[agents.scout]
+tier = "light"
+description = "Agent-Army scout (literature & knowledge): searches and synthesizes papers, compares SOTA, finds research gaps and datasets, and stores what it reads in the shared knowledge base."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "WebSearch", "WebFetch"]
+skills = ["research-lit", "arxiv", "semantic-scholar", "openalex", "alphaxiv", "research-wiki", "literature-review", "citation-management", "research-lookup", "paper-lookup"]
+
+[agents.strategist]
+tier = "medium"
+description = "Agent-Army strategist (ideas & design): generates and ranks ideas, writes falsifiable hypotheses, checks novelty, and designs experiments, statistical plans, ablations and protocols."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "WebSearch", "WebFetch"]
+skills = ["idea-creator", "novelty-check", "research-refine", "experiment-plan", "ablation-planner", "hypothesis-generation", "experimental-design", "scientific-brainstorming", "statistical-power", "brainstorming"]
+
+[agents.engineer]
+tier = "light"
+description = "Agent-Army engineer (research software): writes Python/PyTorch code, data and ML pipelines, tests first, debugs from root cause, refactors and optimizes."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "NotebookEdit"]
+skills = ["test-driven-development", "systematic-debugging", "requesting-code-review", "receiving-code-review", "using-git-worktrees", "verification-before-completion", "research-implement-feature", "experiment-bridge", "web-debug-search", "optimize-for-gpu"]
+
+[agents.experimenter]
+tier = "light"
+description = "Agent-Army experimenter (runs & analysis): runs and monitors experiments with run logs, validates data, does EDA and statistics, makes figures and interprets results."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "NotebookEdit"]
+skills = ["run-experiment", "experiment-queue", "monitor-experiment", "training-check", "analyze-results", "result-to-claim", "exploratory-data-analysis", "statistical-analysis", "scientific-visualization", "matplotlib"]
+
+[agents.writer]
+tier = "medium"
+description = "Agent-Army writer: drafts manuscripts, proposals, rebuttals, abstracts and technical documentation, with LaTeX, figures and bibliography."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill", "WebSearch", "WebFetch"]
+skills = ["paper-writing", "paper-plan", "paper-figure", "paper-compile", "rebuttal", "grant-proposal", "scientific-writing", "venue-templates", "citation-management", "scientific-schematics"]
+
+[agents.editor]
+tier = "light"
+description = "Agent-Army editor: polishes prose, removes AI-writing patterns, and checks terminology, claims and citations for consistency."
+tools = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Skill"]
+skills = ["humanizer", "paper-claim-audit", "citation-audit", "citation-crosscheck", "auto-paper-improvement-loop", "writing-systems-papers", "scientific-writing", "venue-templates", "scientific-critical-thinking", "verification-before-completion"]
+
+[agents.reviewer]
+tier = "medium"
+description = "Agent-Army reviewer: independent fresh-context critique of methods, code and manuscripts, including side-by-side comparison of several attempts."
+tools = ["Read", "Write", "Glob", "Grep", "Bash", "Skill", "WebSearch", "WebFetch"]
+skills = ["research-review", "kill-argument", "auto-review-loop", "novelty-check", "experiment-audit", "proof-checker", "peer-review", "scientific-critical-thinking", "scholar-evaluation", "receiving-code-review"]
+
+[agents.auditor]
+tier = "medium"
+description = "Agent-Army auditor (verification gate): re-checks statistics, math, leakage, reproducibility, citations and facts itself and returns accept, repair or reject."
+tools = ["Read", "Write", "Glob", "Grep", "Bash", "Skill", "WebSearch", "WebFetch"]
+skills = ["experiment-audit", "result-to-claim", "citation-audit", "citation-crosscheck", "paper-claim-audit", "integrity-forensics", "proof-checker", "statistical-analysis", "uncertainty-and-units", "verification-before-completion"]
