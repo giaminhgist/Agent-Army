@@ -15,7 +15,7 @@ def status_text(project: Path) -> str:
     runs = runlog.recent(project, 5)
     lines.append("")
     lines.append("Recent runs:" if runs else "Recent runs: none")
-    lines += [f"  {r.get('run_id', '?')}  exit={r.get('exit_code', '?')}  {r.get('cmd', '')}" for r in runs]
+    lines += [f"  {r.get('run_id', '?')}  {r.get('status', '?'):<11} exit={r.get('exit_code', '-')}  {r.get('cmd', '')}" for r in runs]
     lines.append("")
     lines.append(f"Pending promotion: {len(promote.pending(project))}")
     return "\n".join(lines)

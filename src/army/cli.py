@@ -200,8 +200,9 @@ def cmd_run(args) -> int:
     if not cmd:
         raise CliError("usage: army run [--seed N] [--out PATH] -- CMD ...")
     rec = runlog.run(cmd, project, seed=args.seed, out=args.out)
-    print(f"[army] run_id={rec['run_id']} exit={rec['exit_code']} log={rec['log']}", file=sys.stderr)
-    return rec["exit_code"]
+    print(f"[army] run_id={rec['run_id']} status={rec['status']} exit={rec['exit_code']} log={rec['log']}",
+          file=sys.stderr)
+    return runlog.exit_status(rec)
 
 
 def cmd_status(args) -> int:

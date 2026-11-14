@@ -170,7 +170,7 @@ Paper, note, lesson và preference mới tạo trong project ở trạng thái *
 
 | Lệnh | Tác dụng |
 |---|---|
-| `army run [--seed N] [--out PATH] -- <lệnh>` | Chạy lệnh và ghi log: run_id, git sha, có thay đổi chưa commit không, seed, exit code, file log |
+| `army run [--seed N] [--out PATH] -- <lệnh>` | Chạy lệnh và ghi log: run_id, trạng thái (running → completed / failed / interrupted), git sha, có thay đổi chưa commit không, seed, exit code, file log. `--seed` chỉ đặt biến `ARMY_SEED` (và `PYTHONHASHSEED`): script phải tự đọc `ARMY_SEED` và seed random/numpy/torch |
 | `army status` | Xem kế hoạch, các run gần nhất, số mục chờ promote |
 | `army doctor` | Kiểm tra cài đặt và skill đề xuất còn thiếu |
 | `army build` | Tạo lại agent sau khi sửa `~/.agent-army/army.toml` |

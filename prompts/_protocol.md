@@ -22,6 +22,8 @@
 
 ## Runs
 - Launch experiments and long jobs with `army run [--seed N] [--out PATH] -- <cmd>`, and cite the printed `run_id` for every number you report.
+- `--seed N` only sets `ARMY_SEED` (and `PYTHONHASHSEED`). The script must read `ARMY_SEED` and seed its own RNGs (random, numpy, torch, ...); otherwise the run is not seeded.
+- `army status` shows each run as running, completed, failed, interrupted or lost. Do not report numbers from a run that is not completed without saying so.
 - Start with a small or CPU smoke run before a large one.
 
 ## Skills

@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from army import build, config, paths
+from army import build, config, frontmatter, paths
 
 
 @dataclass
@@ -36,7 +36,19 @@ def find_skill(name: str, platform: str) -> Path | None:
         if cache.is_dir():
             for p in cache.glob(f"**/skills/{name}/SKILL.md"):
                 return p
+            # Single-skill plugins (e.g. humanizer) keep SKILL.md at the plugin root: <market>/<plugin>/<version>/
+            for p in cache.glob("*/*/*/SKILL.md"):
+                if _skill_name(p) == name:
+                    return p
     return None
+
+
+def _skill_name(p: Path) -> str | None:
+    try:
+        meta, _ = frontmatter.parse(p.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return None
+    return meta.get("name") if isinstance(meta.get("name"), str) else None
 
 
 def manifest() -> dict:
